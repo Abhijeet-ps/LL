@@ -1,4 +1,4 @@
-import jwt, { TokenExpiredError, VerifyErrors } from "jsonwebtoken";
+import jwt, { TokenExpiredError } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import User from "../models/user-model";
 
@@ -25,9 +25,10 @@ export const authenticationMiddleware = async (
     } catch (error) {
       if (error instanceof TokenExpiredError) {
         try {
-          // Generate a new token with the same payload as the existing token
-          const existingPayload = jwt.decode(token) as Record<string, any>;
-          const newToken = generateNewToken(existingPayload);
+          const { exp, ...payloadWithoutExp } = jwt.decode(token) as Record<string, any>; // Extract payload from the expired token
+          const newToken = jwt.sign(payloadWithoutExp, "express", {
+            expiresIn: "30d", // Set the expiration for the new token
+          });
           decodedToken = jwt.verify(newToken, "express"); // Verify the new token
           response.setHeader("Authorization", newToken); // Update the response headers with the new token
         } catch (err) {
@@ -53,15 +54,6 @@ export const authenticationMiddleware = async (
     throw error;
   }
 };
-
-function generateNewToken(payload: Record<string, any>): string {
-  const { exp, ...payloadWithoutExp } = payload; // Remove 'exp' property from the payload
-  const newToken = jwt.sign(payloadWithoutExp, "express", {
-    expiresIn: "30d", // Set the expiration for the new token
-  });
-  return newToken;
-}
-
 
 
 
