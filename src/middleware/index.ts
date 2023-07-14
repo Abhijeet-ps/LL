@@ -55,11 +55,13 @@ export const authenticationMiddleware = async (
 };
 
 function generateNewToken(payload: Record<string, any>): string {
-  const newToken = jwt.sign(payload, "express", {
+  const { exp, ...payloadWithoutExp } = payload; // Remove 'exp' property from the payload
+  const newToken = jwt.sign(payloadWithoutExp, "express", {
     expiresIn: "30d", // Set the expiration for the new token
   });
   return newToken;
 }
+
 
 
 
